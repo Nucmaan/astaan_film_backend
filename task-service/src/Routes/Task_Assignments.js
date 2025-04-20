@@ -1,13 +1,10 @@
 const { createTaskAssignment, updateAssignedTask, getUserAssignments, editTaskStatusUpdate, getUserTaskStatusUpdates, getAllTaskStatusUpdates, submitTheTask } = require("../Controllers/Task_Assignments.js");
-const { authMiddleware, isLogin } = require('../middleware/authMiddleware.js');
 const Router = require("express").Router();
 const { upload } = require('../middleware/uploadMiddleware.js'); 
 
 Router.post("/assignTask",createTaskAssignment);
 Router.put('/assign/:task_id/:user_id', updateAssignedTask);
-
 Router.get('/userAssignments/:user_id',getUserAssignments);
-
 
 Router.put('/task_status_update/:status_update_id',editTaskStatusUpdate);
 Router.get('/findMyTaskStatusUpdate/:user_id',getUserTaskStatusUpdates);

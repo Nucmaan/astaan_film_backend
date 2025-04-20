@@ -1,5 +1,4 @@
 const { createProject, getAllProjects, getSingleProject, deleteProject, updateProject } = require('../Controllers/Project');
-const { authMiddleware, isLogin } = require('../middleware/authMiddleware.js');
 const Router = require('express').Router();
 const { upload } = require('../middleware/uploadMiddleware.js'); 
 

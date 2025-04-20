@@ -11,7 +11,7 @@ sequelize
   .authenticate()
   .then(() => {
     console.log("Database connection successful!");
-    return sequelize.sync({ force: false }); // Ensure tables are created
+    return sequelize.sync({ force: false });
   })
   .then(() => {
     console.log("Tables synchronized successfully.");

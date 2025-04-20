@@ -1,9 +1,7 @@
-const TaskDb = require("../Database/TaskDb.js");
 const fs = require("fs");
 const path = require("path");
 const Task = require("../Model/TasksModel.js");
 const axios = require("axios");
-
 const redis = require("../utills/redis.js");
 
 const checkProjectExists = async (project_id) => {
