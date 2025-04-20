@@ -55,6 +55,15 @@ services:
     container_name: user-service
     ports:
       - "3001:3001"
+    environment:
+      - NODE_ENV=docker
+      - DOCKER_DB_NAME=kong
+      - DOCKER_DB_USER=kong
+      - DOCKER_DB_PASS=kong
+      - DOCKER_DB_HOST=kong-db
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
     networks:
       - kong-net
 
@@ -64,6 +73,15 @@ services:
     container_name: task-service
     ports:
       - "3002:3002"
+    environment:
+      - NODE_ENV=docker
+      - DOCKER_DB_NAME=kong
+      - DOCKER_DB_USER=kong
+      - DOCKER_DB_PASS=kong
+      - DOCKER_DB_HOST=kong-db
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
     networks:
       - kong-net
 
@@ -73,8 +91,64 @@ services:
     container_name: project-service
     ports:
       - "3003:3003"
+    environment:
+      - NODE_ENV=docker
+      - DOCKER_DB_NAME=kong
+      - DOCKER_DB_USER=kong
+      - DOCKER_DB_PASS=kong
+      - DOCKER_DB_HOST=kong-db
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
     networks:
       - kong-net
+
+  payment-service:
+    build:
+      context: ./payment-service
+    container_name: payment-service
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=docker
+      - DOCKER_DB_NAME=kong
+      - DOCKER_DB_USER=kong
+      - DOCKER_DB_PASS=kong
+      - DOCKER_DB_HOST=kong-db
+    networks:
+      - kong-net
+
+  notification-service:
+    build:
+      context: ./notification-service
+    container_name: notification-service
+    ports:
+      - "3005:3005"
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - kong-net
+  
+  chat-service:
+    build:
+      context: ./chat-service
+    container_name: chat-service
+    ports:
+      - "3006:3006"
+    networks:
+      - kong-net
+  
+  analytics-service:
+    build:
+      context: ./analytics-service
+    container_name: analytics-service
+    ports:
+      - "3007:3007"
+    networks:
+      - kong-net
+      
 
   redis:
     image: redis:6

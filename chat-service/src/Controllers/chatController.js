@@ -1,4 +1,4 @@
-const chatService = require("../services/chatService");
+const chatService = require("../Services/chatService.js");
 
 const sendMessage = async (req, res) => {
   try {
