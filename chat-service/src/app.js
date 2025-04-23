@@ -15,6 +15,10 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 app.use("/public", express.static("public"));
 
+app.get('/', (req, res) => {
+  res.send('Chat Service API is running');
+});
+
 app.use("/api/chat", chatRoutes);
 
 

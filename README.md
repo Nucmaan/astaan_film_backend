@@ -1,36 +1,88 @@
-# astaan_film_backend
-Astan Film
+# Astaan Film Backend
 
+This repository contains the microservices architecture for the Astaan Film backend.
 
-Your Kong API Gateway is now configured with both rate limiting and JWT authentication. Here are the JWT credentials you'll need to use when generating tokens in your application:
-key: dpkcJNrjmiQKgDpo16zzG7ynxhiY4H3V
-secret: glgq9wIRiUVjXVN086UMvcWAn1JnYfiz
-algorithm: HS256
-To integrate this with your backend services:
-In your login/authentication service, when a user successfully logs in, generate a JWT token using these credentials.
-Return this token to the client.
-Clients should include this token in the Authorization header for all subsequent requests to protected endpoints.
-Example of how to generate a JWT token in your Node.js application:
+## Services
 
-const jwt = require('jsonwebtoken');
+- **User Service**: Handles user authentication, registration, and profile management
+- **Task Service**: Manages tasks and assignments
+- **Project Service**: Handles project creation and management
+- **Payment Service**: Processes payments and financial transactions
+- **Notification Service**: Manages notifications and alerts
+- **Chat Service**: Enables real-time chat communication
+- **Analytics Service**: Provides analytics and reporting capabilities
 
-// After user successfully logs in
-const payload = {
-  iss: 'dpkcJNrjmiQKgDpo16zzG7ynxhiY4H3V', // The 'key' from Kong JWT credentials
-  exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
-  user_id: user.id, // Add any custom claims you need
-  // Add more user data as needed
-};
+## Getting Started
 
-const token = jwt.sign(payload, 'glgq9wIRiUVjXVN086UMvcWAn1JnYfiz', { algorithm: 'HS256' });
+### Prerequisites
 
-// Return this token to the client
+- Docker and Docker Compose
+- Git
 
-Then in your frontend, include this token in all requests to protected APIs:
-fetch('http://localhost:8000/api/auth/users', {
-  method: 'GET',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-})
+### Setup and Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/astaan_film_backend.git
+   cd astaan_film_backend
+   ```
+
+2. Start the services:
+   ```
+   docker-compose up -d
+   ```
+
+3. To check the status of the containers:
+   ```
+   docker-compose ps
+   ```
+
+### Service Endpoints
+
+Each microservice is accessible through its own port:
+
+- User Service: http://localhost:8001
+- Project Service: http://localhost:8002
+- Task Service: http://localhost:8003
+- Notification Service: http://localhost:8004
+- Chat Service: http://localhost:8005
+- Analytics Service: http://localhost:8007
+- Payment Service: http://localhost:8008
+
+## Development
+
+### Adding a New Service
+
+1. Create a new service directory
+2. Add your service to the `docker-compose.yml` file
+3. Configure the necessary dependencies (database, Redis, etc.)
+
+### Stopping the Services
+
+```
+docker-compose down
+```
+
+To remove all data (including volumes):
+```
+docker-compose down -v
+```
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Check container logs:
+   ```
+   docker-compose logs [service-name]
+   ```
+
+2. Restart a specific service:
+   ```
+   docker-compose restart [service-name]
+   ```
+
+3. Rebuild a service:
+   ```
+   docker-compose up -d --build [service-name]
+   ```
