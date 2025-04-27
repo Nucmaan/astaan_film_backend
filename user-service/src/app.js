@@ -50,6 +50,9 @@ app.use("/public", express.static("public"));
 
 const authRoutes = require("./Routes/User.js");
 
+app.get('/', (req, res) => {
+  res.send('User Service ')
+})
 
 app.use("/api/auth/", authRoutes);
 

@@ -248,19 +248,28 @@ const editStatusUpdate = async (statusUpdateId, status) => {
       throw new Error("Invalid status");
     }
 
-     const statusUpdate = await TaskStatusUpdate.findByPk(statusUpdateId);
+    const isTaskExist = await SubTask.findByPk(statusUpdateId);
+    if (!isTaskExist) {
+      throw new Error("Task not found");
+    }
+
+    await SubTask.update({status: status}, {where: {id: statusUpdateId}});
+
+    const statusUpdate = await TaskStatusUpdate.findOne({
+      where: {
+        task_id: statusUpdateId,
+      }
+    });
 
     if (!statusUpdate) {
       throw new Error("Status update not found");
     }
 
-    // Initialize with 0 instead of null
     let timeTakenInHours = 0;
     let timeTakenInMinutes = 0;
 
     if (status === "Completed") {
-      // Check if task has already been completed before
-      const completedUpdate = await TaskStatusUpdate.findOne({
+       const completedUpdate = await TaskStatusUpdate.findOne({
         where: { 
           task_id: statusUpdate.task_id,
           status: "Completed",
@@ -268,10 +277,8 @@ const editStatusUpdate = async (statusUpdateId, status) => {
         },
       });
 
-      // Only calculate time if task hasn't been completed with time tracked before
-      if (!completedUpdate) {
-        // Find the last "In Progress" status update for this task
-        let progressUpdate = await TaskStatusUpdate.findOne({
+       if (!completedUpdate) {
+         let progressUpdate = await TaskStatusUpdate.findOne({
           where: { 
             task_id: statusUpdate.task_id,
             status: "In Progress"
@@ -288,7 +295,6 @@ const editStatusUpdate = async (statusUpdateId, status) => {
       }
     }
 
-    ///console.log("timeTakenInHours",timeTakenInHours, "timeTakenInMinutes", timeTakenInMinutes);
 
     await axios.put(`http://localhost:8003/api/subtasks/UpdateSubTask/${statusUpdate.task_id}`, {
       status

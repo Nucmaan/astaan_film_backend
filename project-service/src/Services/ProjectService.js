@@ -6,6 +6,8 @@ const { Op } = require("sequelize");
 
 //const redis = require('../utills/redis.js');
 
+
+
 const getUserFromService = async (userId) => {
   try {
     const response = await axios.get(
@@ -33,9 +35,46 @@ const getProjectTasks = async (projectId) => {
   }
 };
 
+ const getUsersFromService = async (userIds) => {
+   const uniqueUserIds = [...new Set(userIds)];
+  
+  try {
+   
+    const userPromises = uniqueUserIds.map(userId => 
+      axios.get(`http://localhost:8001/api/auth/users/${userId}`)
+        .then(response => ({ 
+          id: userId, 
+          user: response.data.user 
+        }))
+        .catch(() => ({ 
+          id: userId, 
+          user: null 
+        }))
+    );
+    
+    const results = await Promise.all(userPromises);
+    
+    const userMap = {};
+    results.forEach(result => {
+      userMap[result.id] = result.user || {
+        id: result.id,
+        name: "Unknown",
+        email: "Unknown",
+        role: "Unknown",
+        profile_image: null
+      };
+    });
+    
+    return userMap;
+  } catch (error) {
+    console.error("Error batch fetching users:", error.message);
+    return {};
+  }
+};
+
 const getAllProjects = async () => {
   try {
-    const projects = await Project.findAll({
+     const projects = await Project.findAll({
       attributes: [
         "id",
         "name",
@@ -52,40 +91,46 @@ const getAllProjects = async () => {
       ],
     });
 
-    const projectsWithUserInfo = await Promise.all(
-      projects.map(async (project) => {
-        try {
-          const user = await getUserFromService(project.created_by);
-          const tasks = await getProjectTasks(project.id);
-          const tasksCount = tasks.length;
+    if (!projects.length) {
+      return [];
+    }
 
-          if (!user) {
-            throw new Error("User not found");
-          }
-
-          return {
-            ...project.toJSON(),
-            creator_id: user.id,
-            creator_name: user.name,
-            creator_email: user.email,
-            creator_role: user.role,
-            creator_profile_image: user.profile_image,
-            tasks_count: tasksCount
-          };
-        } catch (userError) {
-          console.error("Error fetching user data:", userError.message);
-          return {
-            ...project.toJSON(),
-            creator_id: null,
-            creator_name: "Unknown",
-            creator_email: "Unknown",
-            creator_role: "Unknown",
-            creator_profile_image: null,
-            tasks_count: 0
-          };
-        }
-      })
+    const creatorIds = projects.map(project => project.created_by);
+    const projectIds = projects.map(project => project.id);
+    
+    const userMap = await getUsersFromService(creatorIds);
+    
+    const taskPromises = projectIds.map(projectId => 
+      getProjectTasks(projectId)
+        .then(tasks => ({ projectId, tasks: tasks || [], count: tasks ? tasks.length : 0 }))
+        .catch(() => ({ projectId, tasks: [], count: 0 }))
     );
+    
+    const taskResults = await Promise.all(taskPromises);
+    
+    const taskMap = {};
+    taskResults.forEach(result => {
+      taskMap[result.projectId] = { 
+        tasks: result.tasks, 
+        count: result.count 
+      };
+    });
+
+    const projectsWithUserInfo = projects.map(project => {
+      const user = userMap[project.created_by];
+      const taskInfo = taskMap[project.id] || { tasks: [], count: 0 };
+      
+      return {
+        ...project.toJSON(),
+        creator_id: user ? user.id : null,
+        creator_name: user ? user.name : "Unknown",
+        creator_email: user ? user.email : "Unknown",
+        creator_role: user ? user.role : "Unknown",
+        creator_profile_image: user ? user.profile_image : null,
+        tasks_count: taskInfo.count
+      };
+    });
+    
     return projectsWithUserInfo;
   } catch (error) {
     console.error("Error fetching projects:", error.message);

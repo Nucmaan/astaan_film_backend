@@ -51,6 +51,10 @@ app.use("/public", express.static("public"));
 
  const paymentRoutes = require("./route/paymentRoutes.js");
 
+ app.get('/', (req, res) => {
+  res.send('Payment Service ')
+})
+
  app.use("/api/payments", paymentRoutes);
 
 

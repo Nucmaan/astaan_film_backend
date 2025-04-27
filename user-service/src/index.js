@@ -1,5 +1,5 @@
 require("dotenv").config();
-const sequelize = require("./Database/index.js");  // Import sequelize instance
+const sequelize = require("./Database/index.js");  
 const app = require("./app.js");
 
 const PORT = process.env.PORT;

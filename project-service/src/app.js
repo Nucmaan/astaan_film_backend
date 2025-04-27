@@ -50,6 +50,10 @@ app.use("/public", express.static("public"));
 
 const projectRoutes = require("./Routes/Project.js");
 
+app.get('/', (req, res) => {
+  res.send('Project Service ')
+})
+
 app.use("/api/project/", projectRoutes);
 
 

@@ -1,39 +1,114 @@
-const notificationService = require("../Services/notificationService.js");
+const notificationService = require("../Services/notificationService");
 
-// 🟢 Send Normal Notification
-const createNotification = async (req, res) => {
+const SendNotification = async (req, res) => {
   try {
     const { userId, message } = req.body;
-    await notificationService.createNotification(userId, message); // 🟢 Updated function name
-    res.status(200).json({ message: "Notification created successfully" });
+
+    if(!userId) {
+      return res.status(400).json({ message: "UserId is Required" });
+    }
+
+    if(!message) {
+      return res.status(400).json({ message: "Message is Required" });
+    }
+    
+    const response = await notificationService.SendNotification(userId, message);
+
+    if (!response.success) {
+      return res.status(400).json({ message: response.message });
+    }
+    
+    res.status(201).json({ 
+      message: "Notification sent successfully", 
+      data: response.data 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error creating notification", error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// 🟢 Send Scheduled Notification
-const createScheduledNotification = async (req, res) => {
+const getAllNotifications = async (req, res) => {
   try {
-    const { userId, message, deadline } = req.body;
-    const scheduled = await notificationService.createScheduledNotification(userId, message, deadline);
-    res.status(200).json({ message: "Scheduled notification created successfully", scheduled });
+    const response = await notificationService.getAllNotifications();
+    
+    if (!response.success) {
+      return res.status(400).json({ message: response.message });
+    }
+    
+    res.status(200).json({ 
+      message: "Notifications retrieved successfully", 
+      data: response.data 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error scheduling notification", error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-const getNotifications = async (req, res) => {
+const getNotificationsByUserId = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    const notifications = await notificationService.getNotifications(userId);
-    res.status(200).json({ notifications });
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ message: "UserId is Required" });
+    }
+    
+    const response = await notificationService.getNotificationsByUserId(userId);
+    
+    if (!response.success) {
+      return res.status(400).json({ message: response.message });
+    }
+    
+    res.status(200).json({ 
+      message: "User notifications retrieved successfully", 
+      data: response.data 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching notifications", error: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const deleteAllNotifications = async (req, res) => {
+  try {
+    const response = await notificationService.deleteAllNotifications();
+    
+    if (!response.success) {
+      return res.status(400).json({ message: response.message });
+    }
+    
+    res.status(200).json({ 
+      message: response.message
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({ message: "Notification ID is required" });
+    }
+    
+    const response = await notificationService.deleteNotification(id);
+    
+    if (!response.success) {
+      return res.status(404).json({ message: response.message });
+    }
+    
+    res.status(200).json({ 
+      message: response.message
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 module.exports = {
-  createNotification,
-  createScheduledNotification,
-  getNotifications,
-};
+  SendNotification,
+  getAllNotifications,
+  getNotificationsByUserId,
+  deleteAllNotifications,
+  deleteNotification
+}

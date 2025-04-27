@@ -1,61 +1,149 @@
-const redis = require("../Config/redis.js");
-const cron = require("node-cron");
+const axios = require("axios");
+const Notification = require("../Models/notificationModel");
 
- const createNotification = async (userId, message) => {
-  const notification = {
-    message,
-    timestamp: new Date().toISOString(),
-  };
-  await redis.lpush(`notifications:${userId}`, JSON.stringify(notification));
-};
 
- const getNotifications = async (userId) => {
-  const notifications = await redis.lrange(`notifications:${userId}`, 0, -1);
-  return notifications.map(notification => JSON.parse(notification));
-};
-
- const createScheduledNotification = async (userId, message, deadline) => {
-  const timestamp = new Date(deadline).getTime();
-  if (timestamp <= Date.now()) {
-    throw new Error("❌ Deadline must be in the future!");
+const getUserFromService = async (userId) => {
+  try {
+    const response = await axios.get(
+      `http://localhost:8001/api/auth/users/${userId}`
+    );
+    return response.data.user;
+  } catch (error) {
+    console.error("Error fetching user:", error.message);
+    return null;
   }
-
-  const notificationKey = `scheduled:${userId}:${timestamp}`;
-  
-   await redis.set(
-    notificationKey,
-    JSON.stringify({ userId, message, deadline }),
-    "EX",
-    Math.floor((timestamp - Date.now()) / 1000)
-  );
-
-  console.log(`✅ Scheduled notification stored: ${notificationKey}`);
-  return { userId, message, deadline };
 };
 
- const sendScheduledNotification = async (userId, message) => {
-  console.log(`📢 Sending scheduled notification to User ${userId}: ${message}`);
-  await createNotification(userId, message); 
-};
+const SendNotification = async (userId, message) => {
+  try {
 
- cron.schedule("* * * * *", async () => {
-  console.log("🔍 Checking for scheduled messages...");
+    const user = await getUserFromService(userId);
 
-  const keys = await redis.keys("scheduled:*");
-  for (const key of keys) {
-    const notificationData = await redis.get(key);
-    if (notificationData) {
-      const { userId, message, deadline } = JSON.parse(notificationData);
-      if (new Date(deadline) <= new Date()) {
-        await sendScheduledNotification(userId, message);
-        await redis.del(key); 
-      }
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
     }
+    
+    const message1 = `${user.name} ${message}`;
+
+    const notification = await Notification.create({
+      user_id: userId,
+      user_name: user.name || "Unknown User",
+      message: message1,
+    });
+
+    return {
+      success: true,
+      message: "Notification sent successfully",
+      data: {
+        id: notification.id,
+        user_id: userId,
+        user_name: user.name || "Unknown User",
+        message: message1,
+        created_at: notification.created_at
+      }
+    }; 
+    
+  } catch (error) {
+    console.error("Error sending notification:", error.message);
+    return { 
+      success: false, 
+      message: "Notification failed. Please try again later.",
+    };
   }
-});
+};
+
+const getAllNotifications = async () => {
+  try {
+    const notifications = await Notification.findAll({
+      order: [['created_at', 'DESC']]
+    });
+    
+    return {
+      success: true,
+      data: notifications
+    };
+  } catch (error) {
+    console.error("Error fetching notifications:", error.message);
+    return {
+      success: false,
+      message: "Failed to fetch notifications"
+    };
+  }
+};
+
+const getNotificationsByUserId = async (userId) => {
+  try {
+    const notifications = await Notification.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'DESC']]
+    });
+    
+    return {
+      success: true,
+      data: notifications
+    };
+  } catch (error) {
+    console.error("Error fetching user notifications:", error.message);
+    return {
+      success: false,
+      message: "Failed to fetch user notifications"
+    };
+  }
+};
+
+const deleteAllNotifications = async () => {
+  try {
+    await Notification.destroy({
+      where: {},
+      truncate: true
+    });
+    
+    return {
+      success: true,
+      message: "All notifications deleted successfully"
+    };
+  } catch (error) {
+    console.error("Error deleting notifications:", error.message);
+    return {
+      success: false,
+      message: "Failed to delete notifications"
+    };
+  }
+};
+
+const deleteNotification = async (notificationId) => {
+  try {
+    const notification = await Notification.findByPk(notificationId);
+    
+    if (!notification) {
+      return {
+        success: false,
+        message: "Notification not found"
+      };
+    }
+    
+    await notification.destroy();
+    
+    return {
+      success: true,
+      message: "Notification deleted successfully"
+    };
+  } catch (error) {
+    console.error("Error deleting notification:", error.message);
+    return {
+      success: false,
+      message: "Failed to delete notification"
+    };
+  }
+};
 
 module.exports = {
-  createNotification,
-  getNotifications,
-  createScheduledNotification,
-};
+  SendNotification,
+  getAllNotifications,
+  getNotificationsByUserId,
+  deleteAllNotifications,
+  deleteNotification
+}

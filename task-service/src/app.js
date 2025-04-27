@@ -51,6 +51,9 @@ const taskRoutes = require("./Routes/Task.js");
 const taskAssignment = require("./Routes/Task_Assignments.js");
 const subTaskRoutes = require("./Routes/Sub_Task.js");
 
+app.get('/', (req, res) => {
+  res.send('Task Service ')
+})
 
 app.use("/api/task/", taskRoutes);
 app.use("/api/task-assignment/", taskAssignment);
